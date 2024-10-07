@@ -1,6 +1,9 @@
 # 우분투 최신 버전 사용
 FROM ubuntu:latest
 
+# 시간대 설정을 위한 ARG 선언 (기본값: Asia/Seoul)
+ARG TZ=Asia/Seoul
+
 # 시스템 업데이트 및 필요한 패키지 설치
 RUN apt-get update && apt-get install -y \
     wget \
@@ -11,7 +14,14 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxrender1 \
     curl \
+    readline-common \
+    libreadline-dev \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
+
+# 시간대 설정
+ENV TZ=${TZ}
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # 미니콘다 설치
 ENV CONDA_DIR /opt/conda
@@ -22,6 +32,11 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     echo "conda activate base" >> ~/.bashrc
+
+# Bash 설정 파일 생성
+RUN echo "set completion-ignore-case On" >> /etc/inputrc && \
+    echo "set show-all-if-ambiguous On" >> /etc/inputrc && \
+    echo "alias ll='ls -la'" >> ~/.bashrc
 
 # PATH에 conda 추가
 ENV PATH=$CONDA_DIR/bin:$PATH
@@ -34,6 +49,14 @@ RUN conda install python=3.11
 
 # JupyterLab 및 필요한 패키지 설치
 RUN conda install -c conda-forge jupyterlab requests
+
+# JupyterLab 설정 파일 생성
+RUN mkdir -p /root/.jupyter && \
+    echo "c.ServerApp.token = ''" >> /root/.jupyter/jupyter_server_config.py && \
+    echo "c.ServerApp.password = ''" >> /root/.jupyter/jupyter_server_config.py && \
+    echo "c.ServerApp.open_browser = False" >> /root/.jupyter/jupyter_server_config.py && \
+    echo "c.ServerApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_server_config.py && \
+    echo "c.ServerApp.allow_root = True" >> /root/.jupyter/jupyter_server_config.py
 
 # 작업 디렉토리 설정
 WORKDIR /workspace
@@ -71,4 +94,3 @@ EXPOSE 18013
 
 # 시작 스크립트 실행
 CMD ["/usr/local/bin/start.sh"]
-

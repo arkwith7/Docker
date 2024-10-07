@@ -1,7 +1,4 @@
 #!/bin/bash
 
-# Jupyter Lab 시작
-jupyter lab --ip=0.0.0.0 --port=18013 --no-browser --allow-root &
-
-# 터미널 세션 시작 (여기서는 bash를 사용)
-/bin/bash
+# JupyterLab 실행 (토큰 없이)
+jupyter lab --ip=0.0.0.0 --port=18013 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
