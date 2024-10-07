@@ -242,20 +242,36 @@ pip install --no-index --find-links=/local-packages openai
 이렇게 설정하면 주피터랩 컨테이너 내에서 다른 API 서비스들에 접근할 수 있습니다. 파이썬 코드에서는 다음과 같이 환경 변수를 사용하여 API에 접근할 수 있습니다:
 ```
 import os
-import requests
 
 llm_url = os.environ['LLM_SERVICE_URL']
 embedding_url = os.environ['EMBEDDING_SERVICE_URL']
 doc_parser_url = os.environ['DOC_PARSER_SERVICE_URL']
+api_key = os.environ['UPSTAGE_API_KEY']
 
-# LLM 서비스 사용 예
-response = requests.get(f"{llm_url}/some_endpoint")
+# OpenAI 패키지 사용 예
+from openai import OpenAI # openai==1.2.0
 
-# Embedding 서비스 사용 예
-response = requests.get(f"{embedding_url}/some_endpoint")
+client = OpenAI(
+    api_key=api_key,
+    base_url=llm_url
+)
 
-# Doc Parser 서비스 사용 예
-response = requests.get(f"{doc_parser_url}/some_endpoint")
+# 업스테이지 LLM 서비스 사용 예
+stream = client.chat.completions.create(
+    model="solar-pro",
+    messages=[
+        {
+            "role": "user",
+            "content": "안녕하세요, 요즘 어때요?"
+        }
+    ],
+    stream=True,
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content is not None:
+        print(chunk.choices[0].delta.content, end="")
+        
 ```
 
 ### 3. 네트워크 연결이 안되는 서버에서 Docker 이미지 설치 절차
