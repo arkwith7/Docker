@@ -145,11 +145,14 @@ docker run -it -p 18013:18013 \
     rag-test-terminal
 ```
 
-여기서 주의할 점은 호스트의 파일 시스템을 컨테이너에 마운트할 때, 호스트의 디렉토리 경로가 호스트의 실제 경로와 일치하는지 확인해야 합니다. 예를 들어, 위의 예제에서는 
-'/home/samuel/local-python-package' -- 개발한경에서 사용할 파이썬 패키지 파일(.whl, .tar등),
-'/mnt/c/Rbrain/PJT/workspace/docs' -- 호스트의 보험기초서류 및 기타 문서 파일들,
-'/mnt/c/Rbrain/PJT/workspace/extracted_texts' -- PDF파일에서 추출된 텍스트 파일들
+여기서 주의할 점은 호스트의 파일 시스템을 컨테이너에 마운트할 때, 호스트의 디렉토리 경로가 호스트의 실제 경로와 일치하는지 확인해야 합니다. 
+예를 들어, 위의 예제에서는 
+- '/home/samuel/local-python-package' -- 개발한경에서 사용할 파이썬 패키지 파일(.whl, .tar등),
+- '/mnt/c/Rbrain/PJT/workspace/docs' -- 호스트의 보험기초서류 및 기타 문서 파일들,
+- '/mnt/c/Rbrain/PJT/workspace/extracted_texts' -- PDF파일에서 추출된 텍스트 파일들
+
 호스트의 디렉토리 경로가 호스트의 실제 경로와 일치하지 않을 수 있습니다. 이 경우, 호스트의 실제 경로를 사용하여 디렉토리를 마운트해야 합니다.
+
 그리고 .env 파일에 환경변수를 설정해야 합니다.
 ```
 LLM_SERVICE_URL=https://api.upstage.ai/v1/solar
