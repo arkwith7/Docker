@@ -74,6 +74,14 @@ jupyter lab --ip=0.0.0.0 --port=18013 --no-browser --allow-root &
 # 이미지 빌드
 docker build -t ubuntu-miniconda-jupyterlab-terminal .
 
+# 환경변수를 사용하여 이미지 빌드
+docker build --build-arg LLM_SERVICE_URL=$(grep LLM_SERVICE_URL .env | cut -d '=' -f2) \
+             --build-arg EMBEDDING_SERVICE_URL=$(grep EMBEDDING_SERVICE_URL .env | cut -d '=' -f2) \
+             --build-arg DOC_PARSER_SERVICE_URL=$(grep DOC_PARSER_SERVICE_URL .env | cut -d '=' -f2) \
+             --build-arg UPSTAGE_API_KEY=$(grep UPSTAGE_API_KEY .env | cut -d '=' -f2) \
+             -t ubuntu-miniconda-jupyterlab-terminal .
+
+
 이제 이 이미지를 빌드하고 실행할 때, 다음과 같이 도커 네트워크를 사용하여 다른 서비스들과 연결해야 합니다:
 
 1. 먼저 도커 네트워크를 생성합니다:
@@ -88,9 +96,17 @@ docker network connect my_api_network doc_parser_service
 # 컨테이너 실행
 docker run -it -p 18013:18013 \
     -v $(pwd):/workspace \
-    -v /home/arkwith/local-python-package:/local-packages:ro \
+    -v /home/samuel/local-python-package:/local-packages:ro \
     --network my_api_network \
     --name jupyterlab_terminal_container \
+    ubuntu-miniconda-jupyterlab-terminal
+
+# 환경정보를 사용하여 컨테이너 실행
+docker run --env-file .env -d -p 18013:18013 \
+    -v $(pwd):/workspace \
+    -v /home/samuel/local-python-package:/local-packages:ro \
+    -v /mnt/c/Rbrain/PJT/workspace/docs:/workspace/host_docs \
+    -v /mnt/c/Rbrain/PJT/workspace/extracted_texts:/workspace/extracted_texts \
     ubuntu-miniconda-jupyterlab-terminal
 
 이 설정의 주요 특징은 다음과 같습니다:

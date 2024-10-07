@@ -38,14 +38,29 @@ RUN conda install -c conda-forge jupyterlab requests
 # 작업 디렉토리 설정
 WORKDIR /workspace
 
-# 로컬 패키지 디렉토리 참조 위치 설정
+# 호스트의 보험기초서류 및 기타 문서를 마운트할 디렉토리 생성
+RUN mkdir -p /workspace/host_docs
+
+# 추출된 텍스트를 저장할 디렉토리 생성
+RUN mkdir -p /workspace/extracted_texts
+
+# 참조할 DRM 라이브러리 참조 디렉토리 생성
+RUN mkdir -p /workspace/drm_library
+
+# 로컬 파이썬 패키지 디렉토리 참조 위치 설정
 ENV LOCAL_PACKAGES_DIR /local-packages
 
-# API 서비스 호스트 설정
-ENV LLM_SERVICE_URL=https://api.upstage.ai/v1/solar
-ENV EMBEDDING_SERVICE_URL=https://api.upstage.ai/v1/solar
-ENV DOC_PARSER_SERVICE_URL=https://api.upstage.ai/v1/document-ai/document-parse
-ENV UPSTAGE_API_KEY=up_xHRxAmCZHbKDbQT0uiBO3VrfJXYxk
+# 환경 변수를 위한 ARG 선언
+ARG LLM_SERVICE_URL
+ARG EMBEDDING_SERVICE_URL
+ARG DOC_PARSER_SERVICE_URL
+ARG UPSTAGE_API_KEY
+
+# 환경 변수 설정
+ENV LLM_SERVICE_URL=${LLM_SERVICE_URL}
+ENV EMBEDDING_SERVICE_URL=${EMBEDDING_SERVICE_URL}
+ENV DOC_PARSER_SERVICE_URL=${DOC_PARSER_SERVICE_URL}
+ENV UPSTAGE_API_KEY=${UPSTAGE_API_KEY}
 
 # 시작 스크립트 추가
 COPY start.sh /usr/local/bin/start.sh
