@@ -107,11 +107,14 @@ RUN python -c "import sqlite3; print(sqlite3.sqlite_version)"
 
 # JupyterLab 설정 파일 생성
 RUN mkdir -p /root/.jupyter && \
-    echo "c.ServerApp.token = ''" >> /root/.jupyter/jupyter_server_config.py && \
-    echo "c.ServerApp.password = ''" >> /root/.jupyter/jupyter_server_config.py && \
-    echo "c.ServerApp.open_browser = False" >> /root/.jupyter/jupyter_server_config.py && \
-    echo "c.ServerApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_server_config.py && \
-    echo "c.ServerApp.allow_root = True" >> /root/.jupyter/jupyter_server_config.py
+    echo "c.ServerApp.token = ''" > /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.password = ''" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.open_browser = False" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.allow_root = True" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.allow_remote_access = True" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.LabApp.terminals_enabled = True" >> /root/.jupyter/jupyter_lab_config.py
+
 
 # 작업 디렉토리 설정
 WORKDIR /workspace
@@ -123,7 +126,7 @@ RUN mkdir -p /workspace/host_docs
 RUN mkdir -p /workspace/extracted_texts
 
 # 참조할 DRM 라이브러리 참조 디렉토리 생성
-RUN mkdir -p /workspace/drm_library
+RUN mkdir -p /workspace/softcamp
 
 # 로컬 파이썬 패키지 디렉토리 참조 위치 설정
 ENV LOCAL_PACKAGES_DIR /local-packages
@@ -151,15 +154,16 @@ RUN echo "source /etc/profile.d/bash_completion.sh" >> ~/.bashrc && \
     echo "HISTFILESIZE=20000" >> ~/.bashrc && \
     echo "PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '" >> ~/.bashrc
 
-# 시작 스크립트 추가
+# start.sh 스크립트 추가 및 설정
 COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
+RUN sed -i 's/\r$//' /usr/local/bin/start.sh && \
+    chmod +x /usr/local/bin/start.sh
 
 # 포트 노출
 EXPOSE 18013
 
 # 시작 스크립트 실행
-CMD ["/usr/local/bin/start.sh"]
+CMD ["/bin/bash", "/usr/local/bin/start.sh"]
 ```
 
 #### 1.2 Docker이미지 실행시 시작 스크립트 만들기
@@ -170,15 +174,27 @@ CMD ["/usr/local/bin/start.sh"]
 # Bash 설정을 로드
 source ~/.bashrc
 
-# JupyterLab 설정 파일 생성 또는 수정
-jupyter lab --generate-config
-echo "c.LabApp.default_url = '/lab?terminal=1'" >> ~/.jupyter/jupyter_lab_config.py
+# JupyterLab 설정 파일 수정
+mkdir -p ~/.jupyter
+cat << EOF > ~/.jupyter/jupyter_lab_config.py
+c.ServerApp.token = ''
+c.ServerApp.password = ''
+c.ServerApp.open_browser = False
+c.ServerApp.ip = '0.0.0.0'
+c.ServerApp.allow_root = True
+c.ServerApp.allow_remote_access = True
+c.LabApp.default_url = '/lab'
+
+# 시작 시 터미널 자동 실행 설정
+c.LabApp.terminals_enabled = True
+c.TerminalManager.auto_open_terminal = True
+EOF
+
+# JupyterLab 실행 (토큰 없이)
+jupyter lab --ip=0.0.0.0 --port=18013 --no-browser --allow-root --LabApp.answer_yes=True
 
 # JupyterLab이 종료되면 bash 셸 시작
 exec /bin/bash
-
-# JupyterLab 실행 (토큰 없이)
-jupyter lab --ip=0.0.0.0 --port=18013 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
 ```
 
 

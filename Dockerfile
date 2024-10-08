@@ -101,11 +101,14 @@ RUN python -c "import sqlite3; print(sqlite3.sqlite_version)"
 
 # JupyterLab 설정 파일 생성
 RUN mkdir -p /root/.jupyter && \
-    echo "c.ServerApp.token = ''" >> /root/.jupyter/jupyter_server_config.py && \
-    echo "c.ServerApp.password = ''" >> /root/.jupyter/jupyter_server_config.py && \
-    echo "c.ServerApp.open_browser = False" >> /root/.jupyter/jupyter_server_config.py && \
-    echo "c.ServerApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_server_config.py && \
-    echo "c.ServerApp.allow_root = True" >> /root/.jupyter/jupyter_server_config.py
+    echo "c.ServerApp.token = ''" > /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.password = ''" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.open_browser = False" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.allow_root = True" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.ServerApp.allow_remote_access = True" >> /root/.jupyter/jupyter_lab_config.py && \
+    echo "c.LabApp.terminals_enabled = True" >> /root/.jupyter/jupyter_lab_config.py
+
 
 # 작업 디렉토리 설정
 WORKDIR /workspace
@@ -145,12 +148,13 @@ RUN echo "source /etc/profile.d/bash_completion.sh" >> ~/.bashrc && \
     echo "HISTFILESIZE=20000" >> ~/.bashrc && \
     echo "PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '" >> ~/.bashrc
 
-# 시작 스크립트 추가
+# start.sh 스크립트 추가 및 설정
 COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
+RUN sed -i 's/\r$//' /usr/local/bin/start.sh && \
+    chmod +x /usr/local/bin/start.sh
 
 # 포트 노출
 EXPOSE 18013
 
 # 시작 스크립트 실행
-CMD ["/usr/local/bin/start.sh"]
+CMD ["/bin/bash", "/usr/local/bin/start.sh"]
