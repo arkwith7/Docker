@@ -237,10 +237,11 @@ docker run -it -p 18013:18013 \
 - '/home/samuel/local-python-package' -- 개발한경에서 사용할 파이썬 패키지 파일(.whl, .tar등),
 - '/mnt/c/Rbrain/PJT/workspace/docs' -- 호스트의 보험기초서류 및 기타 문서 파일들,
 - '/mnt/c/Rbrain/PJT/workspace/extracted_texts' -- PDF파일에서 추출된 텍스트 파일들
+- '/home/genai/softcamp' -- DRM걸린 파일에 대한 암복호화를 위한 라이브러리와 설정 및 가이드 파일들
 
 호스트의 디렉토리 경로가 호스트의 실제 경로와 일치하지 않을 수 있습니다. 이 경우, 호스트의 실제 경로를 사용하여 디렉토리를 마운트해야 합니다.
 
-그리고 .env 파일에 환경변수를 설정해야 합니다.
+그리고 도커이미지 빌드를 위한 Dockerfile파일과 같은 디렉토리에 위치한 .env 파일에 환경변수를 설정해야 합니다.
 ```
 LLM_SERVICE_URL=https://api.upstage.ai/v1/solar
 EMBEDDING_SERVICE_URL=https://api.upstage.ai/v1/solar
@@ -317,25 +318,34 @@ docker build --no-cache \
 `http://{호스트 IP}:18013/lab` 에 접속하여 주피터랩 환경에서 개발합니다.
 
 이 설정의 주요 특징은 다음과 같습니다:
-- 1. 기본 Ubuntu 이미지를 사용하고 있습니다.
-- 2. 필요한 시스템 패키지들을 설치하고 있습니다. readline 관련 패키지도 포함되어 있어 터미널 기능 향상에 도움이 됩니다.
-- 3. Miniconda를 설치하고 환경을 설정하고 있습니다.
+- 1. 기본 Ubuntu 최신 이미지를 사용하고 있습니다.
+- 2. 필요한 시스템 패키지들을 설치하고 있습니다. Java 11, git, vim, nano 등이 포함되어 있어 다양한 개발 작업이 가능합니다.
+- 3. Python 3.11을 설치하고 가상환경을 생성하여 사용합니다.
 - 4. Bash 설정 파일을 생성하여 터미널 사용성을 개선하고 있습니다.
-- 5. Python 3.11과 JupyterLab을 설치하고 있습니다.
+- 5. JupyterLab과 다양한 데이터 과학, 머신러닝 관련 Python 패키지들을 설치하고 있습니다.
 - 6. 필요한 작업 디렉토리들을 생성하고 있습니다.
 - 7. 환경 변수를 ARG를 통해 빌드 시 설정할 수 있도록 하고 있습니다.
 - 8. 시작 스크립트를 추가하고 실행 권한을 부여하고 있습니다.
 
+주요 설치 패키지:
+- JupyterLab, pandas, numpy, matplotlib, seaborn, scikit-learn
+- PDF 처리 관련: PyMuPDF, PyPDF2, pdfplumber
+- 자연어 처리 관련: konlpy, kiwipiepy
+- 머신러닝/딥러닝 관련: langchain, faiss-cpu, chromadb
+- 웹 개발 관련: fastapi, uvicorn
+
 또한 호스트의 파이썬 패키지를 컨테이너에 마운트하여 사용할 수 있도록 설정합니다:
 
 - 1. 처음 접속하면 JupyterLab과 터미널 세션이 모두 실행됩니다.
-- 2. 호스트의 '/home/arkwith/local-python-package' 디렉토리가 컨테이너 내부의 '/local-packages' 디렉토리로 읽기 전용으로 마운트됩니다.
-- 3. 사용자는 터미널에서 직접 pip install --no-index --find-links=/local-packages <package_name> 명령을 사용하여 패키지를 설치할 수 있습니다.
-- 4. '/home/arkwith/local-python-package'과 같이 호스트의 실제 디렉토리에 OpenAI와 관련된 설치 페키지인 `openai`를 설치하기위해 `*.whl, *.tar` 파일이 존재 한다면 아래와 같이 컨테이너 내부의 터미널에서 패키지를 설치 할 수 있습니다:
+- 2. 호스트의 '/local-packages' 디렉토리가 컨테이너 내부의 '/local-packages' 디렉토리로 읽기 전용으로 마운트됩니다.
+- 3. 사용자는 터미널에서 직접 `pip install --no-index --find-links=/local-packages <package_name>` 명령을 사용하여 패키지를 설치할 수 있습니다.
+- 4. 호스트의 '/local-packages' 디렉토리에 특정 패키지의 설치 파일(*.whl, *.tar.gz)이 존재한다면, 아래와 같이 컨테이너 내부의 터미널에서 패키지를 설치할 수 있습니다:
 
 ```
-pip install --no-index --find-links=/local-packages openai
+pip install --no-index --find-links=/local-packages <package_name>
 ```
+
+이 환경은 데이터 과학, 머신러닝, 웹 개발 등 다양한 Python 기반 개발 작업을 수행하기에 적합합니다.
 	
 #### 2.1 파이썬 코드에서 다른 API 서비스들에 접근하기
 
