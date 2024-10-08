@@ -13,48 +13,97 @@ ARG TZ=Asia/Seoul
 # 시스템 업데이트 및 필요한 패키지 설치
 RUN apt-get update && apt-get install -y \
     wget \
-    bzip2 \
     ca-certificates \
-    libglib2.0-0 \
-    libxext6 \
-    libsm6 \
-    libxrender1 \
     curl \
-    readline-common \
-    libreadline-dev \
     tzdata \
+    bash-completion \
+    openjdk-11-jdk \
+    git \
+    zip \
+    unzip \
+    vim \
+    nano \
+    libsqlite3-dev \
+    software-properties-common \
     && rm -rf /var/lib/apt/lists/*
+
+# Python 3.11 저장소 추가 및 설치
+RUN add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y python3.11 python3.11-venv python3.11-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Python 3.11을 기본 Python으로 설정
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
+    update-alternatives --set python3 /usr/bin/python3.11
+
+# pip 설치
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    python3 get-pip.py && \
+    rm get-pip.py
 
 # 시간대 설정
 ENV TZ=${TZ}
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# 미니콘다 설치
-ENV CONDA_DIR /opt/conda
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
-    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
-    rm ~/miniconda.sh && \
-    /opt/conda/bin/conda clean -tipy && \
-    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-    echo "conda activate base" >> ~/.bashrc
+# Java 환경 변수 설정
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV PATH=$PATH:$JAVA_HOME/bin
 
-# Bash 설정 파일 생성
-RUN echo "set completion-ignore-case On" >> /etc/inputrc && \
-    echo "set show-all-if-ambiguous On" >> /etc/inputrc && \
-    echo "alias ll='ls -la'" >> ~/.bashrc
+# Python 가상환경 생성 및 활성화
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# PATH에 conda 추가
-ENV PATH=$CONDA_DIR/bin:$PATH
+# pip 업그레이드 및 필요한 파이썬 패키지 설치
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    jupyterlab \
+    requests \
+    beautifulsoup4 \
+    xlwings \
+    jpype1 \
+    openai \
+    pandas \
+    numpy \
+    matplotlib \
+    seaborn \
+    scikit-learn \
+    llama-index-readers-file \
+    pdfminer.six \
+    PyPDF2 \
+    PyMuPDF \
+    pdfplumber \
+    tabula-py \
+    python-dotenv \
+    langchain-community \
+    langchain-experimental \
+    langchain-core \
+    langchain-openai \
+    langsmith \
+    langchainhub \
+    langchain-upstage \
+    langchain_chroma \
+    llama-index-readers-file \
+    langchain-teddynote \   
+    faiss-cpu \
+    chromadb \
+    pgvector \
+    psycopg2-binary \
+    rank_bm25 \
+    kiwipiepy \
+    konlpy \
+    ipython \
+    ipdb \
+    flake8 \
+    black \
+    pydantic \
+    fastapi \
+    uvicorn \
+    pydantic-settings
 
-# 콘다 최신 버전으로 업데이트
-RUN conda update -n base -c defaults conda
-
-# 파이썬 최신 버전 설치
-RUN conda install python=3.11
-
-# JupyterLab 및 필요한 패키지 설치
-RUN conda install -c conda-forge jupyterlab requests
+# SQLite3 모듈 테스트
+RUN python -c "import sqlite3; print(sqlite3.sqlite_version)"
 
 # JupyterLab 설정 파일 생성
 RUN mkdir -p /root/.jupyter && \
@@ -91,6 +140,17 @@ ENV EMBEDDING_SERVICE_URL=${EMBEDDING_SERVICE_URL}
 ENV DOC_PARSER_SERVICE_URL=${DOC_PARSER_SERVICE_URL}
 ENV UPSTAGE_API_KEY=${UPSTAGE_API_KEY}
 
+# Bash 설정 파일 생성
+RUN echo "source /etc/profile.d/bash_completion.sh" >> ~/.bashrc && \
+    echo "set completion-ignore-case On" >> ~/.inputrc && \
+    echo "set show-all-if-ambiguous On" >> ~/.inputrc && \
+    echo "\"\e[A\": history-search-backward" >> ~/.inputrc && \
+    echo "\"\e[B\": history-search-forward" >> ~/.inputrc && \
+    echo "alias ll='ls -la'" >> ~/.bashrc && \
+    echo "HISTSIZE=10000" >> ~/.bashrc && \
+    echo "HISTFILESIZE=20000" >> ~/.bashrc && \
+    echo "PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '" >> ~/.bashrc
+
 # 시작 스크립트 추가
 COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
@@ -101,14 +161,24 @@ EXPOSE 18013
 # 시작 스크립트 실행
 CMD ["/usr/local/bin/start.sh"]
 ```
+
 #### 1.2 Docker이미지 실행시 시작 스크립트 만들기
 그리고 이상의 Dockerfile파일이 위치하는 디렉토리에 start.sh 스크립트를 다음과 같이 작성합니다:
 ```
 #!/bin/bash
 
+# Bash 설정을 로드
+source ~/.bashrc
+
+# JupyterLab 설정 파일 생성 또는 수정
+jupyter lab --generate-config
+echo "c.LabApp.default_url = '/lab?terminal=1'" >> ~/.jupyter/jupyter_lab_config.py
+
+# JupyterLab이 종료되면 bash 셸 시작
+exec /bin/bash
+
 # JupyterLab 실행 (토큰 없이)
 jupyter lab --ip=0.0.0.0 --port=18013 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
-
 ```
 
 
@@ -141,6 +211,7 @@ docker run -it -p 18013:18013 \
     -v /home/samuel/local-python-package:/local-packages:ro \
     -v /mnt/c/Rbrain/PJT/workspace/docs:/workspace/host_docs \
     -v /mnt/c/Rbrain/PJT/workspace/extracted_texts:/workspace/extracted_texts \
+    -v /home/genai/softcamp:/workspace/softcamp \
     --name jupyterlab_terminal_container \
     rag-test-terminal
 ```
@@ -184,6 +255,7 @@ docker run -it -p 18013:18013 \
     -v /home/samuel/local-python-package:/local-packages:ro \
     -v /mnt/c/Rbrain/PJT/workspace/docs:/workspace/host_docs \
     -v /mnt/c/Rbrain/PJT/workspace/extracted_texts:/workspace/extracted_texts \
+    -v /home/genai/softcamp:/workspace/softcamp \
     --network rag_api_network \
     --name jupyterlab_terminal_container \
     rag-test-terminal
@@ -197,6 +269,7 @@ docker run -d -p 18013:18013 \
     -v /home/samuel/local-python-package:/local-packages:ro \
     -v /mnt/c/Rbrain/PJT/workspace/docs:/workspace/host_docs \
     -v /mnt/c/Rbrain/PJT/workspace/extracted_texts:/workspace/extracted_texts \
+    -v /home/genai/softcamp:/workspace/softcamp \
     --network rag_api_network \
     --name jupyterlab_terminal_container \
     rag-test-terminal
@@ -211,6 +284,17 @@ docker logs jupyterlab_terminal_container
 ```
 docker exec -it jupyterlab_terminal_container /bin/bash
 ```
+#### 1.3.5 도커이미지 재빌드:
+```
+docker build --no-cache \
+  --build-arg TZ=Asia/Seoul \
+  --build-arg LLM_SERVICE_URL=$(grep LLM_SERVICE_URL .env | cut -d '=' -f2) \
+  --build-arg EMBEDDING_SERVICE_URL=$(grep EMBEDDING_SERVICE_URL .env | cut -d '=' -f2) \
+  --build-arg DOC_PARSER_SERVICE_URL=$(grep DOC_PARSER_SERVICE_URL .env | cut -d '=' -f2) \
+  --build-arg UPSTAGE_API_KEY=$(grep UPSTAGE_API_KEY .env | cut -d '=' -f2) \
+  -t rag-test-terminal:latest .
+```
+ - --no-cache: 이 옵션은 이전 빌드의 캐시를 사용하지 않고 모든 단계를 새로 실행합니다. 이는 모든 변경사항이 확실히 적용되도록 합니다.
 
 ### 2. 컨테이너에서 개발하기
 
@@ -319,6 +403,7 @@ docker run -d -p 18013:18013 \
     -v /path/to/local-python-package:/local-packages:ro \
     -v /path/to/docs:/workspace/host_docs \
     -v /path/to/extracted_texts:/workspace/extracted_texts \
+    -v /home/genai/softcamp:/workspace/softcamp \
     --network rag_api_network \
     --name jupyterlab_terminal_container \
     rag-test-terminal
