@@ -453,6 +453,14 @@ docker run -d -p 18013:18013 \
         이 과정을 통해 `local-python-package.tar.gz` 파일이 생성됩니다.
 
  - 볼륨으로 마운트하는 디렉토리들(/workspace/host_docs, /workspace/extracted_texts)도 새 서버에 미리 준비되어 있어야 합니다.
+>>>1. '/home/samuel/local-python-package' -- 개발한경에서 사용할 파이썬 패키지 파일(.whl, .tar등),
+
+>>>2. '/mnt/c/Rbrain/PJT/workspace/docs' -- 호스트의 보험기초서류 및 기타 문서 파일들,
+
+>>>3. '/mnt/c/Rbrain/PJT/workspace/extracted_texts' -- PDF파일에서 추출된 텍스트 파일들
+
+>>>4. '/home/genai/softcamp' -- DRM걸린 파일에 대한 암복호화를 위한 라이브러리와 설정 및 가이드 파일들
+
  - 새 서버의 환경(디렉토리 구조, 사용자 권한 등)에 따라 볼륨 마운트 경로를 적절히 수정해야 할 수 있습니다.
 
 이렇게 하면 네트워크가 연결되지 않은 서버에서도 'rag-test-terminal' Docker 이미지를 사용할 수 있습니다.
