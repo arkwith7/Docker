@@ -207,29 +207,29 @@ docker build \
 --build-arg EMBEDDING_SERVICE_URL=$(grep EMBEDDING_SERVICE_URL .env | cut -d '=' -f2) \
 --build-arg DOC_PARSER_SERVICE_URL=$(grep DOC_PARSER_SERVICE_URL .env | cut -d '=' -f2) \
 --build-arg UPSTAGE_API_KEY=$(grep UPSTAGE_API_KEY .env | cut -d '=' -f2) \
--t rag-test-terminal .
+-t rag-dev-terminal .
 ```
 
 그리고 이미지의 생성 여부 확인후
 
 ```
 samuel@RAG_SRV:~/Dev/Docker$ docker images
-REPOSITORY          TAG       IMAGE ID       CREATED          SIZE
-rag-test-terminal   latest    6f73e3a6d50b   23 minutes ago   1.88GB
+REPOSITORY         TAG       IMAGE ID       CREATED              SIZE
+rag-dev-terminal   latest    9b1a5a90b81c   About a minute ago   2.39GB
 ```
 
-이제 생성된 `rag-test-terminal` 이미지를 사용하여 컨테이너를 실행합니다.
+이제 생성된 `rag-dev-terminal` 이미지를 사용하여 컨테이너를 실행합니다.
 
 ```
-docker run -it -p 18013:18013 \
+docker run -it -p 18019:18013 \
     --env-file .env \
     -v $(pwd):/workspace \
     -v /home/samuel/local-python-package:/local-packages:ro \
     -v /mnt/c/Rbrain/PJT/workspace/docs:/workspace/host_docs \
     -v /mnt/c/Rbrain/PJT/workspace/extracted_texts:/workspace/extracted_texts \
     -v /home/genai/softcamp:/workspace/softcamp \
-    --name jupyterlab_terminal_container \
-    rag-test-terminal
+    --name rag_dev_container \
+    rag-dev-terminal
 ```
 
 여기서 주의할 점은 호스트의 파일 시스템을 컨테이너에 마운트할 때, 호스트의 디렉토리 경로가 호스트의 실제 경로와 일치하는지 확인해야 합니다. 
@@ -241,7 +241,9 @@ docker run -it -p 18013:18013 \
 
 호스트의 디렉토리 경로가 호스트의 실제 경로와 일치하지 않을 수 있습니다. 이 경우, 호스트의 실제 경로를 사용하여 디렉토리를 마운트해야 합니다.
 
-그리고 도커이미지 빌드를 위한 Dockerfile파일과 같은 디렉토리에 위치한 .env 파일에 환경변수를 설정해야 합니다.
+#### 1.3.1 .env 파일에 환경변수를 설정
+
+도커이미지 빌드를 위한 Dockerfile파일과 같은 디렉토리에 위치한 .env 파일에 환경변수를 설정해야 합니다.
 ```
 LLM_SERVICE_URL=https://api.upstage.ai/v1/solar
 EMBEDDING_SERVICE_URL=https://api.upstage.ai/v1/solar
@@ -252,21 +254,40 @@ UPSTAGE_API_KEY=up_?????
 추가적으로 기존 호스트에 도커로 업스테이지 서비스가 실행되고 있을때는, 
 다음과 같이 도커 네트워크를 사용하여 다른 서비스들과 연결해야 합니다:
 
-#### 1.3.1 먼저 도커 네트워크를 생성합니다:
+#### 1.3.2 먼저 도커 네트워크를 생성합니다:
+
 ```
 docker network create rag_api_network
 ```
+만약에 이미 네트워크가 존재한다면 다음 명령어로 네트워크를 확인할 수 있습니다:
+```
+docker network ls
+```
+그리고 구체적인 네트워크 정보는 다음 명령어로 확인할 수 있습니다:
+```
+docker network inspect rag_api_network
+```
+또한 네트워크를 삭제하려면 다음 명령어를 사용합니다:
+```
+docker network rm rag_api_network
+```
+특정 IP 대역을 사용하는 네트워크를 생성하려면 다음 명령어를 사용합니다:
+```
+docker network create --subnet=10.172.33.0/24 rag_api_network
+```
 
-#### 1.3.2 기존의 API 서비스 컨테이너들을 이 네트워크에 연결합니다:
+`rag_api_network`의 IP 대역 10.172.33.0/24의 네트워크를 생성하였습니다. 이를 통해 10.172.33.1부터 10.172.33.254까지의 IP를 사용할 수 있습니다.
+
+#### 1.3.3 기존의 API 서비스 컨테이너들을 이 네트워크에 연결합니다:
 ```
 docker network connect rag_api_network llm_service
 docker network connect rag_api_network embadding_service
 docker network connect rag_api_network doc_parser_service
 ```
 
-#### 1.3.3 주피터랩 컨테이너를 실행할 때 이 네트워크에 연결합니다:
+#### 1.3.4 주피터랩 컨테이너를 실행할 때 이 네트워크에 연결합니다:
 ```
-docker run -it -p 18013:18013 \
+docker run -it -p 18019:18013 \
     --env-file .env \
     -v $(pwd):/workspace \
     -v /home/samuel/local-python-package:/local-packages:ro \
@@ -274,13 +295,13 @@ docker run -it -p 18013:18013 \
     -v /mnt/c/Rbrain/PJT/workspace/extracted_texts:/workspace/extracted_texts \
     -v /home/genai/softcamp:/workspace/softcamp \
     --network rag_api_network \
-    --name jupyterlab_terminal_container \
-    rag-test-terminal
+    --name rag_dev_container \
+    rag-dev-terminal
 ```
 
-#### 1.3.4 주피터랩 컨테이너를 백그라운드로 실행:
+#### 1.3.5 주피터랩 컨테이너를 백그라운드로 실행:
 ```
-docker run -d -p 18013:18013 \
+docker run -d -p 18019:18013 \
     --env-file .env \
     -v $(pwd):/workspace \
     -v /home/samuel/local-python-package:/local-packages:ro \
@@ -288,20 +309,21 @@ docker run -d -p 18013:18013 \
     -v /mnt/c/Rbrain/PJT/workspace/extracted_texts:/workspace/extracted_texts \
     -v /home/genai/softcamp:/workspace/softcamp \
     --network rag_api_network \
-    --name jupyterlab_terminal_container \
-    rag-test-terminal
+    --name rag_dev_container \
+    rag-dev-terminal
 ```
 이렇게 하면 컨테이너가 백그라운드에서 실행되며, 터미널은 즉시 제어권을 돌려받게 됩니다. 컨테이너 ID가 출력되고 바로 프롬프트로 돌아갑니다.
-컨테이너의 로그를 확인하고 싶다면, 다음 명령어를 사용할 수 있습니다:
+
+실행한 컨테이너가 잘 실행되는지를 확인하고 싶다면, 다음 명령어를 사용할 수 있습니다:
 ```
-docker logs jupyterlab_terminal_container
+docker logs rag_dev_container
 ```
 
 컨테이너에 접속해야 할 경우, 다음 명령어를 사용할 수 있습니다:
 ```
-docker exec -it jupyterlab_terminal_container /bin/bash
+docker exec -it rag_dev_container /bin/bash
 ```
-#### 1.3.5 도커이미지 재빌드:
+#### 1.3.6 도커이미지 재빌드:
 ```
 docker build --no-cache \
   --build-arg TZ=Asia/Seoul \
@@ -309,13 +331,13 @@ docker build --no-cache \
   --build-arg EMBEDDING_SERVICE_URL=$(grep EMBEDDING_SERVICE_URL .env | cut -d '=' -f2) \
   --build-arg DOC_PARSER_SERVICE_URL=$(grep DOC_PARSER_SERVICE_URL .env | cut -d '=' -f2) \
   --build-arg UPSTAGE_API_KEY=$(grep UPSTAGE_API_KEY .env | cut -d '=' -f2) \
-  -t rag-test-terminal:latest .
+  -t rag-dev-terminal:latest .
 ```
  - --no-cache: 이 옵션은 이전 빌드의 캐시를 사용하지 않고 모든 단계를 새로 실행합니다. 이는 모든 변경사항이 확실히 적용되도록 합니다.
 
 ### 2. 컨테이너에서 개발하기
 
-`http://{호스트 IP}:18013/lab` 에 접속하여 주피터랩 환경에서 개발합니다.
+`http://{호스트 IP}:18019/lab` 에 접속하여 주피터랩 환경에서 개발합니다.
 
 이 설정의 주요 특징은 다음과 같습니다:
 - 1. 기본 Ubuntu 최신 이미지를 사용하고 있습니다.
@@ -393,24 +415,24 @@ for chunk in stream:
 먼저, 네트워크 연결이 되는 원본 서버에서 이미지를 저장합니다.
 
 ```
-docker save -o rag-test-terminal.tar rag-test-terminal
+docker save -o rag-dev-terminal.tar rag-dev-terminal
 ```
-이 명령어는 'rag-test-terminal' 이미지를 'rag-test-terminal.tar'라는 파일로 저장합니다.
+이 명령어는 'rag-dev-terminal' 이미지를 'rag-dev-terminal.tar'라는 파일로 저장합니다.
 
 #### 3.2 이미지 전송
 
-물리적 매체(예: USB 드라이브, 외장 하드 등)를 사용하여 'rag-test-terminal.tar' 파일을 업무 담당자와 협의하여 네트워크가 연결되지 않은 서버로 전송합니다.
+물리적 매체(예: USB 드라이브, 외장 하드 등)를 사용하여 'rag-dev-terminal.tar' 파일을 업무 담당자와 협의하여 네트워크가 연결되지 않은 서버로 전송합니다.
 
 
 #### 3.3 이미지 로드(네트워크가 연결되지 않은 서버에서)
-'rag-test-terminal.tar'라는 파일을 USB를 이용하여 네트워크가 연결되지 않은 서버에서 로드하고,
+'rag-dev-terminal.tar'라는 파일을 USB를 이용하여 네트워크가 연결되지 않은 서버에서 로드하고,
 도커 로드 명령어를 사용하여 이미지를 로드합니다.
 
 ```
-docker load -i rag-test-terminal.tar
+docker load -i rag-dev-terminal.tar
 ```
 
-이 명령어는 'rag-test-terminal.tar' 파일을 로드하여 'rag-test-terminal' 이미지를 생성합니다.
+이 명령어는 'rag-dev-terminal.tar' 파일을 로드하여 'rag-dev-terminal' 이미지를 생성합니다.
 
 #### 3.4 이미지 확인 및 실행
 
@@ -423,16 +445,15 @@ docker images
 
 이미지 실행
 ```
-docker run -d -p 18013:18013 \
+docker run -d -p 18019:18013 \
     --env-file .env \
     -v $(pwd):/workspace \
     -v /path/to/local-python-package:/local-packages:ro \
     -v /path/to/docs:/workspace/host_docs \
     -v /path/to/extracted_texts:/workspace/extracted_texts \
     -v /home/genai/softcamp:/workspace/softcamp \
-    --network rag_api_network \
-    --name jupyterlab_terminal_container \
-    rag-test-terminal
+    --name rag_dev_container \
+    rag-dev-terminal
 ```
 
 이 명령어로 로드된 이미지를 사용하여 컨테이너를 실행합니다. 단, 볼륨 마운트 경로는 새 서버의 환경에 맞게 조정해야 합니다.

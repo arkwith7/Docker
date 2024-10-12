@@ -1,0 +1,21 @@
+To remove a Docker network, such as rag_api_network, 
+you can use the docker network rm command. However, before you can remove a network, 
+you need to ensure that no containers are connected to it. 
+If there are any containers using the network, you must stop and disconnect them first.
+Here are the steps to remove the network:
+List Networks: First, confirm that the network exists by listing all Docker networks.
+   docker network ls
+
+Disconnect Containers: If there are any containers connected to rag_api_network, 
+you need to stop and disconnect them. You can list the containers connected to a network using:
+   docker network inspect rag_api_network
+
+Then, stop and disconnect any running containers:
+   docker stop <container_id>
+   docker network disconnect rag_api_network <container_id>
+
+3. Remove the Network: Once no containers are connected, you can remove the network.
+   docker network rm rag_api_network
+
+This will delete the rag_api_network from your Docker setup. If you encounter any issues, 
+ensure that all containers are properly disconnected and stopped before attempting to remove the network.

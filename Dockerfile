@@ -56,6 +56,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     requests \
     beautifulsoup4 \
     xlwings \
+    openpyxl \
     jpype1 \
     openai \
     pandas \
