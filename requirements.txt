@@ -1,0 +1,56 @@
+# 기본 라이브러리
+click
+python-dotenv
+requests
+beautifulsoup4
+pandas
+openpyxl
+selenium
+
+# PDF 및 이미지 처리
+pdfplumber
+pdf2image
+img2pdf
+pillow
+pymupdf
+PyPDF2
+
+# 언어 및 텍스트 처리
+kiwipiepy
+konlpy
+sentence-transformers
+lark
+
+# 데이터베이스 및 검색
+chromadb
+pgvector
+psycopg2-binary
+rank_bm25
+faiss-cpu
+
+# Langchain 관련
+langchain
+langchain-community
+langchain-experimental
+langchain-core
+langchain-openai
+langsmith
+langchainhub
+langchain-upstage
+
+# LLM 및 RAG 관련
+llama-index[all]
+llama-index-llms-upstage
+llama-index-readers-file
+ragas[all]
+RAGchain
+
+# 기타
+huggingface_hub
+unstructured
+libhwp
+html5lib
+tiktoken
+
+# 주석
+# 우분투에 sudo apt-get install poppler-utils 필요
