@@ -14,6 +14,9 @@ img2pdf
 pillow
 pymupdf
 PyPDF2
+# 문서
+python-docx 
+pyhwp
 
 # 언어 및 텍스트 처리
 kiwipiepy
@@ -51,6 +54,7 @@ unstructured
 libhwp
 html5lib
 tiktoken
+
 
 # 주석
 # 우분투에 sudo apt-get install poppler-utils 필요
