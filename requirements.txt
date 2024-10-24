@@ -6,6 +6,14 @@ beautifulsoup4
 pandas
 openpyxl
 selenium
+jupyterlab
+xlwings
+jpype1
+openai
+numpy
+matplotlib
+seaborn
+scikit-learn
 
 # PDF 및 이미지 처리
 pdfplumber
@@ -14,10 +22,13 @@ img2pdf
 pillow
 pymupdf
 PyPDF2
+pdfminer.six
+tabula-py
+
 # 문서
 python-docx 
 pyhwp
-
+docx2txt
 # 언어 및 텍스트 처리
 kiwipiepy
 konlpy
@@ -40,21 +51,29 @@ langchain-openai
 langsmith
 langchainhub
 langchain-upstage
+langchain_chroma
+langchain-teddynote
 
 # LLM 및 RAG 관련
-llama-index[all]
+# llama-index[all]
 llama-index-llms-upstage
 llama-index-readers-file
-ragas[all]
 RAGchain
+# ragas[all]
 
 # 기타
-huggingface_hub
-unstructured
-libhwp
-html5lib
-tiktoken
-
+# huggingface_hub
+# libhwp
+# html5lib
+# tiktoken
+# ipython
+# ipdb
+# flake8
+# black
+# pydantic
+# fastapi
+# uvicorn
+# pydantic-settings
 
 # 주석
 # 우분투에 sudo apt-get install poppler-utils 필요
